@@ -43,7 +43,7 @@
     <div class="w-full max-w-xl mx-auto flex flex-col sm:flex-row items-start gap-4">
         <!-- Leaderboard (Kiri) -->
         <div id="leaderboard" class="w-full sm:w-48 bg-white p-3 rounded-xl shadow-sm order-2 sm:order-1 flex-shrink-0">
-            <h2 class="font-bold text-center mb-2 text-slate-600 text-sm">LEADERBOARD</h2>
+            <h2 class="font-bold text-center mb-2 text-slate-600 text-sm">PAPAN SKOR</h2>
             <div id="leaderboard-list" class="flex flex-col gap-1">
                 <!-- Papan skor akan diisi oleh JavaScript -->
             </div>
@@ -55,7 +55,7 @@
                 <h1 class="text-4xl font-black tracking-tighter text-slate-800">KATLA</h1>
                 <p class="text-slate-400 flex items-center justify-center gap-2 text-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-tiktok" viewBox="0 0 16 16"><path d="M9 0h1.98c.144.715.54 1.617 1.235 2.512C12.895 3.389 13.797 4 15 4v2c-1.753 0-3.07-.814-4-1.829V11a5 5> 0 1 1-5-5v2a3 3> 0 1 0 3 3V0Z"/></svg>
-                    <span>TEBAK KATA 5 HURUF</span>
+                    <span>LIVE TIKTOK GAME</span>
                 </p>
             </header>
 
@@ -157,13 +157,20 @@
                             const letterData = guessData.result[tileIndex];
                             tile.textContent = letterData.letter;
                             
-                            setTimeout(() => {
-                                tile.classList.remove('bg-white');
-                                if (letterData.status === 'green') tile.classList.add('bg-green-500', 'border-green-500', 'text-white');
-                                else if (letterData.status === 'yellow') tile.classList.add('bg-amber-500', 'border-amber-500', 'text-white');
-                                else if (letterData.status === 'gray') tile.classList.add('bg-slate-400', 'border-slate-400', 'text-white');
-                                tile.classList.add('tile-flip');
-                            }, tileIndex * 100);
+                            // Hanya animasikan jika belum dianimasikan sebelumnya
+                            if (!tile.classList.contains('has-flipped')) {
+                                setTimeout(() => {
+                                    const baseClasses = 'tile w-full aspect-square rounded-md';
+                                    const statusColorClass = { 
+                                        green: 'bg-green-500 border-green-500 text-white', 
+                                        yellow: 'bg-amber-500 border-amber-500 text-white', 
+                                        gray: 'bg-slate-400 border-slate-400 text-white' 
+                                    }[letterData.status] || 'bg-white';
+    
+                                    tile.className = `${baseClasses} ${statusColorClass}`;
+                                    tile.classList.add('tile-flip', 'has-flipped');
+                                }, tileIndex * 100);
+                            }
                         });
                     } else {
                         nicknameEl.classList.add('opacity-0');
@@ -249,7 +256,6 @@
                 while (toastContainer.firstChild) { toastContainer.removeChild(toastContainer.firstChild); }
                 const toast = document.createElement('div');
                 toast.className = 'bg-slate-800 text-white text-xs py-2 px-4 rounded-full shadow-lg toast-animation max-w-full truncate';
-                toast.textContent = message;
                 toastContainer.appendChild(toast);
                 setTimeout(() => { if(toast.parentElement) { toast.parentElement.removeChild(toast); } }, 5000);
             }
