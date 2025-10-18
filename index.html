@@ -26,6 +26,16 @@
         @keyframes toastIn { from { transform: translateY(150%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
         .toast-animation { animation: toastIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards, fadeOut 0.5s 4.5s forwards; }
+        
+        /* Animasi untuk host mengetik */
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        .tile-pop {
+            animation: pop 0.1s ease-out;
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 flex flex-col items-center justify-center min-h-screen p-2 sm:p-4 overflow-hidden">
@@ -101,6 +111,12 @@
             let winCountTimeout;
             let gameHasEnded = false;
 
+            // --- State untuk host mengetik ---
+            let ws;
+            let hostCurrentRowIndex = 0;
+            let hostCurrentColIndex = 0;
+            let hostCurrentWord = '';
+
             function initializeUI() {
                 gameBoard.innerHTML = '';
                 for (let i = 0; i < ROWS; i++) {
@@ -124,6 +140,7 @@
             }
 
             function updateBoard(guesses) {
+                hostCurrentRowIndex = guesses.length; // Update baris aktif untuk host
                 const reversedGuesses = [...guesses].reverse();
                 const rows = gameBoard.querySelectorAll('.flex.items-center');
                 rows.forEach((rowWrapper, rowIndex) => {
@@ -290,11 +307,66 @@
                 initializeUI();
                 updateTimer(600);
                 updateBestGuess(null);
+                // Reset state host mengetik
+                hostCurrentRowIndex = 0;
+                hostCurrentColIndex = 0;
+                hostCurrentWord = '';
             }
+
+            function handleHostTyping(event) {
+                if (!answerModal.classList.contains('hidden') || gameHasEnded) return;
+
+                const key = event.key;
+
+                if (key === 'Backspace') {
+                    if (hostCurrentWord.length > 0) {
+                        hostCurrentColIndex--;
+                        const rows = gameBoard.querySelectorAll('.flex.items-center');
+                        const targetRow = rows[hostCurrentRowIndex];
+                        if (!targetRow) return;
+
+                        const tiles = targetRow.querySelectorAll('.tile');
+                        const targetTile = tiles[hostCurrentColIndex];
+                        targetTile.textContent = '';
+                        hostCurrentWord = hostCurrentWord.slice(0, -1);
+                    }
+                    return;
+                }
+
+                if (key === 'Enter') {
+                    if (hostCurrentWord.length === 5) {
+                        if (ws && ws.readyState === WebSocket.OPEN) {
+                            ws.send(JSON.stringify({ type: 'adminGuess', word: hostCurrentWord }));
+                        }
+                        hostCurrentWord = '';
+                        hostCurrentColIndex = 0;
+                    }
+                    return;
+                }
+
+                if (key.length === 1 && key.match(/[a-z]/i)) {
+                    if (hostCurrentWord.length < 5) {
+                        const rows = gameBoard.querySelectorAll('.flex.items-center');
+                        const targetRow = rows[hostCurrentRowIndex];
+                        if (!targetRow) return;
+
+                        const tiles = targetRow.querySelectorAll('.tile');
+                        const targetTile = tiles[hostCurrentColIndex];
+                        
+                        targetTile.textContent = key.toUpperCase();
+                        targetTile.classList.add('tile-pop');
+                        setTimeout(() => targetTile.classList.remove('tile-pop'), 100);
+
+                        hostCurrentWord += key.toLowerCase();
+                        hostCurrentColIndex++;
+                    }
+                }
+            }
+
 
             function connectWebSocket() {
                 const wsUrl = `wss://${BACKEND_HOST}`;
-                const ws = new WebSocket(wsUrl);
+                ws = new WebSocket(wsUrl); // Assign ke variabel global
                 ws.onopen = () => showToast('Terhubung ke server game!');
                 ws.onmessage = (event) => {
                     const data = JSON.parse(event.data);
@@ -322,6 +394,7 @@
             function initializeGame() {
                 initializeUI();
                 connectWebSocket();
+                document.addEventListener('keydown', handleHostTyping); // Aktifkan listener keyboard
                 fetch(`https://${BACKEND_HOST}/api/game-state`)
                     .then(res => res.json())
                     .then(data => {
