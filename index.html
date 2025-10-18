@@ -16,11 +16,11 @@
             display: inline-flex;
             justify-content: center;
             align-items: center;
-            font-size: 1.75rem; /* Ukuran font tile diperkecil */
+            font-size: 1.75rem;
             font-weight: bold;
             line-height: 1;
             text-transform: uppercase;
-            border: 2px solid #e2e8f0; /* slate-200 */
+            border: 2px solid #e2e8f0;
             transition: background-color 0.3s, border-color 0.3s, color 0.3s;
         }
         @keyframes toastIn { from { transform: translateY(150%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
@@ -41,7 +41,6 @@
 
         <!-- Area Permainan (Kanan) -->
         <div id="app" class="w-full flex-grow flex flex-col gap-4 order-1 sm:order-2">
-            <!-- Header -->
             <header class="text-center">
                 <h1 class="text-4xl font-black tracking-tighter text-slate-800">KATLA</h1>
                 <p class="text-slate-400 flex items-center justify-center gap-2 text-sm">
@@ -50,7 +49,6 @@
                 </p>
             </header>
 
-            <!-- UI -->
             <div class="grid grid-cols-2 gap-3 text-center">
                 <div class="bg-white p-3 rounded-xl shadow-sm flex flex-col justify-center"><div id="timer" class="text-3xl font-bold text-sky-500">10:00</div><div class="text-xs text-slate-400">SISA WAKTU</div></div>
                 <div class="bg-white p-3 rounded-xl shadow-sm flex flex-col justify-center"><div id="best-guess-display" class="grid grid-cols-5 gap-1 mx-auto h-[36px]" style="width: calc(36px * 5 + 4 * 0.25rem);"></div><div id="best-guess-user" class="text-xs text-slate-400 truncate h-[16px] mt-2">TEBAKAN TERBAIK</div></div>
@@ -61,7 +59,6 @@
         </div>
     </div>
 
-
     <!-- Modals -->
     <div id="answer-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
         <div class="bg-white rounded-2xl shadow-lg p-6 text-center max-w-xs w-full transform transition-all scale-95 opacity-0" id="answer-modal-content">
@@ -71,13 +68,9 @@
         </div>
     </div>
     <div id="win-count-modal" class="fixed top-5 left-1/2 -translate-x-1/2 bg-white border-2 border-amber-400 rounded-2xl shadow-lg p-4 text-center max-w-xs w-full z-40 transition-all transform scale-95 opacity-0 hidden">
-        <p class="text-base text-slate-600">
-            <span id="win-count-nickname" class="font-bold text-slate-800 text-lg"></span>
-        </p>
+        <p class="text-base text-slate-600"><span id="win-count-nickname" class="font-bold text-slate-800 text-lg"></span></p>
         <p class="text-slate-500 mt-1 text-sm">telah memenangkan permainan sebanyak</p>
-        <p class="text-5xl font-black text-amber-400 my-1">
-            <span id="win-count-number">0</span>x
-        </p>
+        <p class="text-5xl font-black text-amber-400 my-1"><span id="win-count-number">0</span>x</p>
     </div>
 
     <script>
@@ -120,22 +113,13 @@
                         tile.className = 'tile w-full aspect-square rounded-md bg-white';
                         tileContainer.appendChild(tile);
                     }
-                    // Wrapper untuk foto profil dan nama
-                    const userWrapper = document.createElement('div');
-                    userWrapper.className = 'w-24 flex items-center gap-1.5 opacity-0 transition-opacity duration-300';
-                    
-                    const imgEl = document.createElement('img');
-                    imgEl.className = 'w-5 h-5 rounded-full bg-slate-200 object-cover flex-shrink-0';
-                    imgEl.onerror = function() { this.style.display = 'none'; }; // Sembunyikan jika gambar gagal dimuat
-                    
+                    // Foto profil dihapus dari sini
                     const nicknameEl = document.createElement('div');
-                    nicknameEl.className = 'text-sm font-medium text-slate-500 text-left break-words';
+                    nicknameEl.className = 'w-24 text-sm font-medium text-slate-500 text-left break-words nickname-display opacity-0 transition-opacity duration-300';
                     nicknameEl.style.lineHeight = '1.2';
 
-                    userWrapper.appendChild(imgEl);
-                    userWrapper.appendChild(nicknameEl);
                     rowWrapper.appendChild(tileContainer);
-                    rowWrapper.appendChild(userWrapper);
+                    rowWrapper.appendChild(nicknameEl);
                     gameBoard.appendChild(rowWrapper);
                 }
             }
@@ -145,16 +129,12 @@
                 const rows = gameBoard.querySelectorAll('.flex.items-center');
                 rows.forEach((rowWrapper, rowIndex) => {
                     const tileContainer = rowWrapper.querySelector('.grid.grid-cols-5');
-                    const userWrapper = rowWrapper.querySelector('.flex.items-center.gap-1\\.5');
-                    const imgEl = userWrapper.querySelector('img');
-                    const nicknameEl = userWrapper.querySelector('div');
+                    const nicknameEl = rowWrapper.querySelector('.nickname-display');
                     const tiles = tileContainer.querySelectorAll('.tile');
                     const guessData = reversedGuesses[rowIndex];
 
                     if (guessData) {
-                        userWrapper.classList.remove('opacity-0');
-                        imgEl.src = guessData.profilePictureUrl;
-                        imgEl.style.display = 'block';
+                        nicknameEl.classList.remove('opacity-0');
                         nicknameEl.textContent = guessData.nickname || guessData.username;
                         
                         tiles.forEach((tile, tileIndex) => {
@@ -170,7 +150,7 @@
                             }, tileIndex * 100);
                         });
                     } else {
-                        userWrapper.classList.add('opacity-0');
+                        nicknameEl.classList.add('opacity-0');
                         tiles.forEach(tile => {
                             tile.textContent = '';
                             tile.className = 'tile w-full aspect-square rounded-md bg-white';
@@ -186,12 +166,11 @@
                     return;
                 }
 
-                // Ubah objek menjadi array dan urutkan
-                const sortedPlayers = Object.values(leaderboardData)
-                    .sort((a, b) => b.score - a.score)
+                const sortedPlayers = Object.entries(leaderboardData)
+                    .sort(([, a], [, b]) => b - a)
                     .slice(0, 10);
 
-                sortedPlayers.forEach((player, index) => {
+                sortedPlayers.forEach(([nickname, score], index) => {
                     const playerEl = document.createElement('div');
                     playerEl.className = 'flex items-center justify-between text-sm p-1.5 rounded-md ' + (index < 3 ? 'bg-amber-200' : '');
                     
@@ -201,30 +180,26 @@
                     const rank = document.createElement('span');
                     rank.className = 'font-bold w-5 text-slate-400 text-right flex-shrink-0';
                     rank.textContent = `${index + 1}.`;
-
-                    // Tambahkan foto profil di leaderboard
-                    const img = document.createElement('img');
-                    img.src = player.profilePictureUrl;
-                    img.className = 'w-5 h-5 rounded-full object-cover flex-shrink-0';
-                    img.onerror = function() { this.style.display = 'none'; };
                     
+                    // Foto profil dihapus dari sini
                     const name = document.createElement('span');
                     name.className = 'font-medium text-slate-700 truncate';
-                    name.textContent = player.nickname; // Tampilkan nickname
+                    name.textContent = nickname;
                     
                     rankAndName.appendChild(rank);
-                    rankAndName.appendChild(img);
                     rankAndName.appendChild(name);
                     
                     const scoreEl = document.createElement('span');
                     scoreEl.className = 'font-bold text-slate-800 flex-shrink-0';
-                    scoreEl.textContent = player.score;
+                    scoreEl.textContent = score;
 
                     playerEl.appendChild(rankAndName);
                     playerEl.appendChild(scoreEl);
                     leaderboardList.appendChild(playerEl);
                 });
             }
+
+            // ... (sisa fungsi JavaScript tidak berubah)
 
             function updateTimer(seconds) {
                 const minutes = Math.floor(seconds / 60);
