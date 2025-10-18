@@ -140,7 +140,7 @@
             }
 
             function updateBoard(guesses) {
-                hostCurrentRowIndex = guesses.length; // Update baris aktif untuk host
+                hostCurrentRowIndex = guesses.length;
                 const reversedGuesses = [...guesses].reverse();
                 const rows = gameBoard.querySelectorAll('.flex.items-center');
                 rows.forEach((rowWrapper, rowIndex) => {
@@ -157,26 +157,30 @@
                             const letterData = guessData.result[tileIndex];
                             tile.textContent = letterData.letter;
                             
-                            // Hanya animasikan jika belum dianimasikan sebelumnya
-                            if (!tile.classList.contains('has-flipped')) {
-                                setTimeout(() => {
-                                    const baseClasses = 'tile w-full aspect-square rounded-md';
-                                    const statusColorClass = { 
-                                        green: 'bg-green-500 border-green-500 text-white', 
-                                        yellow: 'bg-amber-500 border-amber-500 text-white', 
-                                        gray: 'bg-slate-400 border-slate-400 text-white' 
-                                    }[letterData.status] || 'bg-white';
-    
-                                    tile.className = `${baseClasses} ${statusColorClass}`;
-                                    tile.classList.add('tile-flip', 'has-flipped');
-                                }, tileIndex * 100);
-                            }
+                            const needsAnimation = !tile.dataset.isFlipped;
+                            
+                            setTimeout(() => {
+                                const baseClasses = 'tile w-full aspect-square rounded-md';
+                                const statusColorClass = { 
+                                    green: 'bg-green-500 border-green-500 text-white', 
+                                    yellow: 'bg-amber-500 border-amber-500 text-white', 
+                                    gray: 'bg-slate-400 border-slate-400 text-white' 
+                                }[letterData.status] || 'bg-white';
+                                
+                                tile.className = `${baseClasses} ${statusColorClass}`;
+                                
+                                if (needsAnimation) {
+                                    tile.classList.add('tile-flip');
+                                    tile.dataset.isFlipped = 'true';
+                                }
+                            }, tileIndex * 100);
                         });
                     } else {
                         nicknameEl.classList.add('opacity-0');
                         tiles.forEach(tile => {
                             tile.textContent = '';
                             tile.className = 'tile w-full aspect-square rounded-md bg-white';
+                            delete tile.dataset.isFlipped;
                         });
                     }
                 });
@@ -256,6 +260,7 @@
                 while (toastContainer.firstChild) { toastContainer.removeChild(toastContainer.firstChild); }
                 const toast = document.createElement('div');
                 toast.className = 'bg-slate-800 text-white text-xs py-2 px-4 rounded-full shadow-lg toast-animation max-w-full truncate';
+                toast.textContent = message;
                 toastContainer.appendChild(toast);
                 setTimeout(() => { if(toast.parentElement) { toast.parentElement.removeChild(toast); } }, 5000);
             }
@@ -313,7 +318,6 @@
                 initializeUI();
                 updateTimer(600);
                 updateBestGuess(null);
-                // Reset state host mengetik
                 hostCurrentRowIndex = 0;
                 hostCurrentColIndex = 0;
                 hostCurrentWord = '';
@@ -321,16 +325,13 @@
 
             function handleHostTyping(event) {
                 if (!answerModal.classList.contains('hidden') || gameHasEnded) return;
-
                 const key = event.key;
-
                 if (key === 'Backspace') {
                     if (hostCurrentWord.length > 0) {
                         hostCurrentColIndex--;
                         const rows = gameBoard.querySelectorAll('.flex.items-center');
                         const targetRow = rows[hostCurrentRowIndex];
                         if (!targetRow) return;
-
                         const tiles = targetRow.querySelectorAll('.tile');
                         const targetTile = tiles[hostCurrentColIndex];
                         targetTile.textContent = '';
@@ -338,7 +339,6 @@
                     }
                     return;
                 }
-
                 if (key === 'Enter') {
                     if (hostCurrentWord.length === 5) {
                         if (ws && ws.readyState === WebSocket.OPEN) {
@@ -349,30 +349,25 @@
                     }
                     return;
                 }
-
                 if (key.length === 1 && key.match(/[a-z]/i)) {
                     if (hostCurrentWord.length < 5) {
                         const rows = gameBoard.querySelectorAll('.flex.items-center');
                         const targetRow = rows[hostCurrentRowIndex];
                         if (!targetRow) return;
-
                         const tiles = targetRow.querySelectorAll('.tile');
                         const targetTile = tiles[hostCurrentColIndex];
-                        
                         targetTile.textContent = key.toUpperCase();
                         targetTile.classList.add('tile-pop');
                         setTimeout(() => targetTile.classList.remove('tile-pop'), 100);
-
                         hostCurrentWord += key.toLowerCase();
                         hostCurrentColIndex++;
                     }
                 }
             }
 
-
             function connectWebSocket() {
                 const wsUrl = `wss://${BACKEND_HOST}`;
-                ws = new WebSocket(wsUrl); // Assign ke variabel global
+                ws = new WebSocket(wsUrl);
                 ws.onopen = () => showToast('Terhubung ke server game!');
                 ws.onmessage = (event) => {
                     const data = JSON.parse(event.data);
@@ -400,7 +395,7 @@
             function initializeGame() {
                 initializeUI();
                 connectWebSocket();
-                document.addEventListener('keydown', handleHostTyping); // Aktifkan listener keyboard
+                document.addEventListener('keydown', handleHostTyping);
                 fetch(`https://${BACKEND_HOST}/api/game-state`)
                     .then(res => res.json())
                     .then(data => {
