@@ -44,7 +44,7 @@
             <header class="text-center">
                 <h1 class="text-4xl font-black tracking-tighter text-slate-800">KATLA</h1>
                 <p class="text-slate-400 flex items-center justify-center gap-2 text-sm">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-tiktok" viewBox="0 0 16 16"><path d="M9 0h1.98c.144.715.54 1.617 1.235 2.512C12.895 3.389 13.797 4 15 4v2c-1.753 0-3.07-.814-4-1.829V11a5 5 0 1 1-5-5v2a3 3> 0 1 0 3 3V0Z"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-tiktok" viewBox="0 0 16 16"><path d="M9 0h1.98c.144.715.54 1.617 1.235 2.512C12.895 3.389 13.797 4 15 4v2c-1.753 0-3.07-.814-4-1.829V11a5 5> 0 1 1-5-5v2a3 3> 0 1 0 3 3V0Z"/></svg>
                     <span>LIVE TIKTOK GAME</span>
                 </p>
             </header>
@@ -113,7 +113,6 @@
                         tile.className = 'tile w-full aspect-square rounded-md bg-white';
                         tileContainer.appendChild(tile);
                     }
-                    // Foto profil dihapus dari sini
                     const nicknameEl = document.createElement('div');
                     nicknameEl.className = 'w-24 text-sm font-medium text-slate-500 text-left break-words nickname-display opacity-0 transition-opacity duration-300';
                     nicknameEl.style.lineHeight = '1.2';
@@ -181,7 +180,6 @@
                     rank.className = 'font-bold w-5 text-slate-400 text-right flex-shrink-0';
                     rank.textContent = `${index + 1}.`;
                     
-                    // Foto profil dihapus dari sini
                     const name = document.createElement('span');
                     name.className = 'font-medium text-slate-700 truncate';
                     name.textContent = nickname;
@@ -198,8 +196,6 @@
                     leaderboardList.appendChild(playerEl);
                 });
             }
-
-            // ... (sisa fungsi JavaScript tidak berubah)
 
             function updateTimer(seconds) {
                 const minutes = Math.floor(seconds / 60);
